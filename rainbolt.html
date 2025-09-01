@@ -1,0 +1,722 @@
+import pygame
+import sys
+import os
+import random
+import time
+from pygame import transform
+import math
+import numpy
+
+
+# Inizializza pygame
+pygame.init()
+
+# Costanti
+LARGHEZZA, ALTEZZA = 800, 600
+COLORE_SFONDO = (30, 30, 30)
+COLORE_BOTTONE = (70, 130, 180)
+COLORE_TESTO = (255, 255, 255)
+COLORE_CONFERMA = (34, 177, 76)
+COLORE_SLIDER = (200, 200, 200)
+COLORE_SLIDER_ATTIVO = (0, 255, 0)
+FONT = pygame.font.SysFont(None, 40)
+FONT_PICCOLO = pygame.font.SysFont(None, 30)
+
+# Setup finestra
+schermo = pygame.display.set_mode((LARGHEZZA, ALTEZZA))
+pygame.display.set_caption('Rainbolt be like - Seleziona Opzioni')
+
+# Opzioni aggiornate
+opzioni = [
+    'sfocata',
+    'parziale',
+    "all' incontario",
+    'distorta',
+]
+
+# Dizionario codici ISO2 -> (nome italiano, nome inglese)
+NOMI_BANDIERE = {
+    'af': ('afghanistan', 'afghanistan'),
+    'al': ('albania', 'albania'),
+    'dz': ('algeria', 'algeria'),
+    'ad': ('andorra', 'andorra'),
+    'ao': ('angola', 'angola'),
+    'ag': ('antigua e barbuda', 'antigua and barbuda'),
+    'ar': ('argentina', 'argentina'),
+    'am': ('armenia', 'armenia'),
+    'au': ('australia', 'australia'),
+    'at': ('austria', 'austria'),
+    'az': ('azerbaigian', 'azerbaijan'),
+    'bs': ('bahamas', 'bahamas'),
+    'bh': ('bahrein', 'bahrain'),
+    'bd': ('bangladesh', 'bangladesh'),
+    'bb': ('barbados', 'barbados'),
+    'by': ('bielorussia', 'belarus'),
+    'be': ('belgio', 'belgium'),
+    'bz': ('belize', 'belize'),
+    'bj': ('benin', 'benin'),
+    'bt': ('bhutan', 'bhutan'),
+    'bo': ('bolivia', 'bolivia'),
+    'ba': ('bosnia ed erzegovina', 'bosnia and herzegovina'),
+    'bw': ('botswana', 'botswana'),
+    'br': ('brasile', 'brazil'),
+    'bn': ('brunei', 'brunei'),
+    'bg': ('bulgaria', 'bulgaria'),
+    'bf': ('burkina faso', 'burkina faso'),
+    'bi': ('burundi', 'burundi'),
+    'kh': ('cambogia', 'cambodia'),
+    'cm': ('camerun', 'cameroon'),
+    'ca': ('canada', 'canada'),
+    'cv': ('capo verde', 'cape verde'),
+    'cf': ('repubblica centrafricana', 'central african republic'),
+    'td': ('ciad', 'chad'),
+    'cl': ('cile', 'chile'),
+    'cn': ('cina', 'china'),
+    'co': ('colombia', 'colombia'),
+    'km': ('comore', 'comoros'),
+    'cg': ('repubblica del congo', 'republic of the congo'),
+    'cd': ('repubblica democratica del congo', 'democratic republic of the congo'),
+    'cr': ('costarica', 'costa rica'),
+    'ci': ("costa d'avorio", 'ivory coast'),
+    'hr': ('croazia', 'croatia'),
+    'cu': ('cuba', 'cuba'),
+    'cy': ('cipro', 'cyprus'),
+    'cz': ('repubblica ceca', 'czech republic'),
+    'dk': ('danimarca', 'denmark'),
+    'dj': ('gibuti', 'djibouti'),
+    'dm': ('dominica', 'dominica'),
+    'do': ('repubblica dominicana', 'dominican republic'),
+    'ec': ('ecuador', 'ecuador'),
+    'eg': ('egitto', 'egypt'),
+    'sv': ('el salvador', 'el salvador'),
+    'gq': ('guinea equatoriale', 'equatorial guinea'),
+    'er': ('eritrea', 'eritrea'),
+    'ee': ('estonia', 'estonia'),
+    'sz': ('eswatini', 'eswatini'),
+    'et': ('etiopia', 'ethiopia'),
+    'fj': ('fiji', 'fiji'),
+    'fi': ('finlandia', 'finland'),
+    'fr': ('francia', 'france'),
+    'ga': ('gabon', 'gabon'),
+    'gm': ('gambia', 'gambia'),
+    'ge': ('georgia', 'georgia'),
+    'de': ('germania', 'germany'),
+    'gh': ('ghana', 'ghana'),
+    'gr': ('grecia', 'greece'),
+    'gd': ('grenada', 'grenada'),
+    'gt': ('guatemala', 'guatemala'),
+    'gn': ('guinea', 'guinea'),
+    'gw': ('guinea-bissau', 'guinea-bissau'),
+    'gy': ('guyana', 'guyana'),
+    'ht': ('haiti', 'haiti'),
+    'hn': ('honduras', 'honduras'),
+    'hu': ('ungheria', 'hungary'),
+    'is': ('islanda', 'iceland'),
+    'in': ('india', 'india'),
+    'id': ('indonesia', 'indonesia'),
+    'ir': ('iran', 'iran'),
+    'iq': ('iraq', 'iraq'),
+    'ie': ('irlanda', 'ireland'),
+    'il': ('israele', 'israel'),
+    'it': ('italia', 'italy'),
+    'jm': ('giamaica', 'jamaica'),
+    'jp': ('giappone', 'japan'),
+    'jo': ('giordania', 'jordan'),
+    'kz': ('kazakistan', 'kazakhstan'),
+    'ke': ('kenya', 'kenya'),
+    'ki': ('kiribati', 'kiribati'),
+    'kp': ('corea del nord', 'north korea'),
+    'kr': ('corea del sud', 'south korea'),
+    'kw': ('kuwait', 'kuwait'),
+    'kg': ('kirghizistan', 'kyrgyzstan'),
+    'la': ('laos', 'laos'),
+    'lv': ('lettonia', 'latvia'),
+    'lb': ('libano', 'lebanon'),
+    'ls': ('lesotho', 'lesotho'),
+    'lr': ('liberia', 'liberia'),
+    'ly': ('libia', 'libya'),
+    'li': ('liechtenstein', 'liechtenstein'),
+    'lt': ('lituania', 'lithuania'),
+    'lu': ('lussemburgo', 'luxembourg'),
+    'mg': ('madagascar', 'madagascar'),
+    'mw': ('malawi', 'malawi'),
+    'my': ('malesia', 'malaysia'),
+    'mv': ('maldive', 'maldives'),
+    'ml': ('mali', 'mali'),
+    'mt': ('malta', 'malta'),
+    'mh': ('isole marshall', 'marshall islands'),
+    'mr': ('mauritania', 'mauritania'),
+    'mu': ('mauritius', 'mauritius'),
+    'mx': ('messico', 'mexico'),
+    'fm': ('micronesia', 'micronesia'),
+    'md': ('moldavia', 'moldova'),
+    'mc': ('monaco', 'monaco'),
+    'mn': ('mongolia', 'mongolia'),
+    'me': ('montenegro', 'montenegro'),
+    'ma': ('marocco', 'morocco'),
+    'mz': ('mozambico', 'mozambique'),
+    'mm': ('myanmar', 'myanmar'),
+    'na': ('namibia', 'namibia'),
+    'nr': ('nauru', 'nauru'),
+    'np': ('nepal', 'nepal'),
+    'nl': ('paesi bassi', 'netherlands'),
+    'nz': ('nuova zelanda', 'new zealand'),
+    'ni': ('nicaragua', 'nicaragua'),
+    'ne': ('niger', 'niger'),
+    'ng': ('nigeria', 'nigeria'),
+    'mk': ('macedonia del nord', 'north macedonia'),
+    'no': ('norvegia', 'norway'),
+    'om': ('oman', 'oman'),
+    'pk': ('pakistan', 'pakistan'),
+    'pw': ('palau', 'palau'),
+    'ps': ('palestina', 'palestine'),
+    'pa': ('panama', 'panama'),
+    'pg': ('papua nuova guinea', 'papua new guinea'),
+    'py': ('paraguay', 'paraguay'),
+    'pe': ('perù', 'peru'),
+    'ph': ('filippine', 'philippines'),
+    'pl': ('polonia', 'poland'),
+    'pt': ('portogallo', 'portugal'),
+    'qa': ('qatar', 'qatar'),
+    'ro': ('romania', 'romania'),
+    'ru': ('russia', 'russia'),
+    'rw': ('ruanda', 'rwanda'),
+    'kn': ('saint kitts e nevis', 'saint kitts and nevis'),
+    'lc': ('saint lucia', 'saint lucia'),
+    'vc': ('saint vincent e grenadine', 'saint vincent and the grenadines'),
+    'ws': ('samoa', 'samoa'),
+    'sm': ('san marino', 'san marino'),
+    'st': ('sao tome e principe', 'sao tome and principe'),
+    'sa': ('arabia saudita', 'saudi arabia'),
+    'sn': ('senegal', 'senegal'),
+    'rs': ('serbia', 'serbia'),
+    'sc': ('seychelles', 'seychelles'),
+    'sl': ('sierra leone', 'sierra leone'),
+    'sg': ('singapore', 'singapore'),
+    'sk': ('slovacchia', 'slovakia'),
+    'si': ('slovenia', 'slovenia'),
+    'sb': ('isole salomone', 'solomon islands'),
+    'so': ('somalia', 'somalia'),
+    'za': ('sudafrica', 'south africa'),
+    'ss': ('sud sudan', 'south sudan'),
+    'es': ('spagna', 'spain'),
+    'lk': ('sri lanka', 'sri lanka'),
+    'sd': ('sudan', 'sudan'),
+    'sr': ('suriname', 'suriname'),
+    'se': ('svezia', 'sweden'),
+    'ch': ('svizzera', 'switzerland'),
+    'sy': ('siria', 'syria'),
+    'tw': ('taiwan', 'taiwan'),
+    'tj': ('tagikistan', 'tajikistan'),
+    'tz': ('tanzania', 'tanzania'),
+    'th': ('thailandia', 'thailand'),
+    'tl': ('timor est', 'timor-leste'),
+    'tg': ('togo', 'togo'),
+    'to': ('tonga', 'tonga'),
+    'tt': ('trinidad e tobago', 'trinidad and tobago'),
+    'tn': ('tunisia', 'tunisia'),
+    'tr': ('turchia', 'turkey'),
+    'tm': ('turkmenistan', 'turkmenistan'),
+    'tv': ('tuvalu', 'tuvalu'),
+    'ug': ('uganda', 'uganda'),
+    'ua': ('ucraina', 'ukraine'),
+    'ae': ('emirati arabi uniti', 'united arab emirates'),
+    'gb': ('regno unito', 'united kingdom'),
+    'us': ('stati uniti', 'united states'),
+    'uy': ('uruguay', 'uruguay'),
+    'uz': ('uzbekistan', 'uzbekistan'),
+    'vu': ('vanuatu', 'vanuatu'),
+    'va': ('città del vaticano', 'vatican city'),
+    've': ('venezuela', 'venezuela'),
+    'vn': ('vietnam', 'vietnam'),
+    'ye': ('yemen', 'yemen'),
+    'zm': ('zambia', 'zambia'),
+    'zw': ('zimbabwe', 'zimbabwe'),
+}
+
+# Percorso cartella bandiere
+PERCORSO_BANDIERE = r'C:\Users\Utente\Desktop\bandiere'
+
+# Funzione per disegnare i bottoni delle opzioni
+def disegna_bottoni(schermo, opzioni):
+    bottoni = []
+    spaziatura = 20
+    larghezza_attuale = schermo.get_width()
+    altezza_attuale = schermo.get_height()
+    larghezza_bottone = min(300, larghezza_attuale - 100)
+    altezza_bottone = 60
+    x = (larghezza_attuale - larghezza_bottone) // 2
+    y = 60
+    for opzione in opzioni:
+        rect = pygame.Rect(x, y, larghezza_bottone, altezza_bottone)
+        pygame.draw.rect(schermo, COLORE_BOTTONE, rect)
+        testo = FONT.render(opzione, True, COLORE_TESTO)
+        testo_rect = testo.get_rect(center=rect.center)
+        schermo.blit(testo, testo_rect)
+        bottoni.append((rect, opzione))
+        y += altezza_bottone + spaziatura
+    return bottoni, y
+
+# Funzione per disegnare il tasto conferma
+def disegna_conferma(schermo, y):
+    larghezza = 200
+    altezza = 60
+    larghezza_attuale = schermo.get_width()
+    x = (larghezza_attuale - larghezza) // 2
+    rect = pygame.Rect(x, y + 20, larghezza, altezza)
+    pygame.draw.rect(schermo, COLORE_CONFERMA, rect)
+    testo = FONT.render('Conferma', True, COLORE_TESTO)
+    testo_rect = testo.get_rect(center=rect.center)
+    schermo.blit(testo, testo_rect)
+    return rect
+
+# Slider generico
+def slider(schermo, titolo, min_val, max_val, step, valore_iniziale, unita):
+    clock = pygame.time.Clock()
+    valore = valore_iniziale
+    larghezza_attuale = schermo.get_width()
+    altezza_attuale = schermo.get_height()
+    slider_lunghezza = min(400, larghezza_attuale - 100)
+    slider_altezza = 8
+    slider_x = (larghezza_attuale - slider_lunghezza) // 2
+    slider_y = altezza_attuale // 2
+    manopola_raggio = 15
+    conferma_rect = pygame.Rect((larghezza_attuale-200)//2, slider_y+60, 200, 50)
+    frame_rect = pygame.Rect((larghezza_attuale-200)//2, slider_y+120, 200, 50)
+    dragging = False
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    mx, my = event.pos
+                    if (slider_x <= mx <= slider_x+slider_lunghezza and
+                        slider_y-manopola_raggio <= my <= slider_y+manopola_raggio):
+                        dragging = True
+                    if conferma_rect.collidepoint(mx, my):
+                        return valore
+                    if frame_rect.collidepoint(mx, my):
+                        return ("frame", valore)  # Mostra per un frame
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+                    dragging = False
+            elif event.type == pygame.MOUSEMOTION and dragging:
+                mx, _ = event.pos
+                rel = (mx - slider_x) / slider_lunghezza
+                rel = max(0, min(1, rel))
+                valore = min_val + rel * (max_val - min_val)
+                # Arrotonda al passo
+                valore = round(valore / step) * step
+                valore = max(min_val, min(max_val, valore))
+        schermo.fill(COLORE_SFONDO)
+        # Titolo
+        testo = FONT.render(titolo, True, COLORE_TESTO)
+        schermo.blit(testo, (larghezza_attuale//2 - testo.get_width()//2, slider_y-80))
+        # Slider
+        pygame.draw.rect(schermo, COLORE_SLIDER, (slider_x, slider_y, slider_lunghezza, slider_altezza))
+        rel = (valore - min_val) / (max_val - min_val)
+        manopola_x = slider_x + int(rel * slider_lunghezza)
+        pygame.draw.circle(schermo, COLORE_SLIDER_ATTIVO, (manopola_x, slider_y+slider_altezza//2), manopola_raggio)
+        # Valore
+        testo_val = FONT_PICCOLO.render(f"{valore:.2f} {unita}", True, COLORE_TESTO)
+        schermo.blit(testo_val, (larghezza_attuale//2 - testo_val.get_width()//2, slider_y+30))
+        # Bottone conferma
+        pygame.draw.rect(schermo, COLORE_CONFERMA, conferma_rect)
+        testo_conf = FONT_PICCOLO.render('Conferma', True, COLORE_TESTO)
+        schermo.blit(testo_conf, (conferma_rect.centerx-testo_conf.get_width()//2, conferma_rect.centery-testo_conf.get_height()//2))
+        # Bottone mostra per un frame
+        pygame.draw.rect(schermo, (255, 140, 0), frame_rect)
+        testo_frame = FONT_PICCOLO.render('Mostra per un frame', True, (255,255,255))
+        schermo.blit(testo_frame, (frame_rect.centerx-testo_frame.get_width()//2, frame_rect.centery-testo_frame.get_height()//2))
+        pygame.display.flip()
+        clock.tick(60)
+
+# Schermata di selezione opzioni
+def schermata_opzioni():
+    clock = pygame.time.Clock()
+    selezionate = set()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F11:
+                    set_fullscreen()
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_pos = event.pos
+                # Controlla se clic sul pulsante fullscreen
+                if fullscreen_rect.collidepoint(mouse_pos):
+                    set_fullscreen()
+                else:
+                    for rect, opzione in bottoni:
+                        if rect.collidepoint(mouse_pos):
+                            if opzione in selezionate:
+                                selezionate.remove(opzione)
+                            else:
+                                selezionate.add(opzione)
+                    if conferma_rect.collidepoint(mouse_pos):
+                        schermata_conferma(selezionate)
+                        return
+        schermo.fill(COLORE_SFONDO)
+        bottoni, y = disegna_bottoni(schermo, opzioni)
+        for rect, opzione in bottoni:
+            if opzione in selezionate:
+                pygame.draw.rect(schermo, (0, 255, 0), rect, 4)
+        conferma_rect = disegna_conferma(schermo, y)
+        fullscreen_rect = disegna_pulsante_fullscreen(schermo)
+        pygame.display.flip()
+        clock.tick(60)
+
+# Schermata successiva (gestione logica opzioni avanzate)
+def schermata_conferma(selezionate):
+    handicap = {}
+    # Tempo obbligatorio
+    secondi = slider(
+        schermo,
+        'Seleziona i secondi di visualizzazione',
+        0.01, 3.0, 0.01, 1.0, 's'
+    )
+    mostra_per_frame = False
+    if isinstance(secondi, tuple) and secondi[0] == "frame":
+        mostra_per_frame = True
+        handicap['secondi'] = secondi[1]  # valore slider
+        handicap['mostra_per_frame'] = True
+    else:
+        handicap['secondi'] = secondi
+    if 'sfocata' in selezionate:
+        intensita = slider(
+            schermo,
+            'Seleziona intensità sfocatura',
+            10, 100, 1, 30, '%'
+        )
+        if isinstance(intensita, tuple) and intensita[0] == "frame":
+            mostra_per_frame = True
+            handicap['sfocatura'] = intensita[1]
+            handicap['mostra_per_frame'] = True
+        else:
+            handicap['sfocatura'] = intensita
+    for op in selezionate:
+        handicap[op] = True
+    schermata_finale(handicap)
+
+# Schermata finale (vuota per ora)
+def schermata_finale(handicap=None):
+    clock = pygame.time.Clock()
+    continua = True
+    while continua:
+        # Scegli una bandiera a caso tra quelle disponibili
+        files = [f for f in os.listdir(PERCORSO_BANDIERE) if f.endswith('.png')]
+        if not files:
+            print('Nessuna bandiera trovata!')
+            return
+        file_bandiera = random.choice(files)
+        codice = file_bandiera.split('.')[0]
+        img_path = os.path.join(PERCORSO_BANDIERE, file_bandiera)
+        bandiera = pygame.image.load(img_path).convert()
+        bandiera = pygame.transform.smoothscale(bandiera, (400, 240))
+
+        # Applica handicap
+        mostra_bandiera = True
+        start_time = time.time()
+        durata = 9999
+        intensita_sfocatura = 0
+        mostra_parziale = False
+        ruota = False
+        distorci = False
+        mostra_per_frame = False
+        if handicap and 'secondi' in handicap:
+            durata = handicap['secondi']
+        if handicap and 'mostra_per_frame' in handicap:
+            mostra_per_frame = True
+        if handicap:
+            if 'sfocata' in handicap:
+                intensita_sfocatura = handicap.get('sfocatura', 0)
+            if 'parziale' in handicap:
+                mostra_parziale = True
+            if "all' incontario" in handicap:
+                ruota = True
+            if 'distorta' in handicap:
+                distorci = True
+
+        # Definisci il rettangolo del tasto 'torna al menu' (proporzionale)
+        larghezza_attuale = schermo.get_width()
+        altezza_attuale = schermo.get_height()
+        menu_rect = pygame.Rect(larghezza_attuale - 210, 10, 200, 50)
+        # Definisci il rettangolo del tasto 'Non è comparso' (solo se serve)
+        mostra_tasto_non_comparso = (durata == 0.01 or mostra_per_frame)
+        non_comparso_rect = pygame.Rect((larghezza_attuale-200)//2, 10, 200, 50)
+        # Definisci il rettangolo del pulsante fullscreen (proporzionale)
+        pulsante_size = min(40, schermo.get_width() // 20)
+        fullscreen_rect = pygame.Rect(schermo.get_width() - pulsante_size - 10, 10, pulsante_size, pulsante_size)
+
+        # Mostra bandiera con handicap
+        mostrata = False
+        frame_mostrato = False
+        while not mostrata:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if fullscreen_rect.collidepoint(event.pos):
+                        set_fullscreen()
+                    elif menu_rect.collidepoint(event.pos):
+                        return schermata_opzioni()
+                    elif mostra_tasto_non_comparso and non_comparso_rect.collidepoint(event.pos):
+                        # Riproponi la stessa bandiera
+                        return schermata_finale(handicap)
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_F11:
+                        set_fullscreen()
+            schermo.fill((50, 50, 50))
+            img = bandiera.copy()
+            # Sfocatura (applicata come ridimensionamento e upscaling)
+            if intensita_sfocatura > 0:
+                scale = max(1, int(400 * (1 - intensita_sfocatura/100)))
+                if scale < 400:
+                    img = pygame.transform.smoothscale(img, (scale, int(240*scale/400)))
+                    img = pygame.transform.smoothscale(img, (400, 240))
+            # Parziale
+            if mostra_parziale:
+                rect = pygame.Rect(random.randint(0, 300), random.randint(0, 180), 100, 60)
+                img = img.subsurface(rect)
+                img = pygame.transform.smoothscale(img, (400, 240))
+            # Ruota
+            if ruota:
+                img = pygame.transform.rotate(img, 180)
+            # Distorta (effetto onda semplice)
+            if distorci:
+                arr = pygame.surfarray.pixels3d(img)
+                for y in range(arr.shape[1]):
+                    offset = int(10 * math.sin(y/15))
+                    arr[:,y] = numpy.roll(arr[:,y], offset, axis=0)
+                del arr
+            schermo.blit(img, (larghezza_attuale//2-200, altezza_attuale//2-120))
+            # Disegna il tasto 'torna al menu'
+            pygame.draw.rect(schermo, (180, 60, 60), menu_rect)
+            testo_menu = FONT_PICCOLO.render('torna al menu', True, (255,255,255))
+            schermo.blit(testo_menu, (menu_rect.centerx-testo_menu.get_width()//2, menu_rect.centery-testo_menu.get_height()//2))
+            # Disegna il tasto 'Non è comparso' se serve
+            if mostra_tasto_non_comparso:
+                pygame.draw.rect(schermo, (200, 120, 0), non_comparso_rect)
+                testo_non_comp = FONT_PICCOLO.render('Non è comparso', True, (255,255,255))
+                schermo.blit(testo_non_comp, (non_comparso_rect.centerx-testo_non_comp.get_width()//2, non_comparso_rect.centery-testo_non_comp.get_height()//2))
+            # Disegna il pulsante fullscreen
+            disegna_pulsante_fullscreen(schermo)
+            pygame.display.flip()
+            if mostra_per_frame:
+                if not frame_mostrato:
+                    frame_mostrato = True
+                else:
+                    mostrata = True
+            else:
+                if time.time() - start_time > durata:
+                    mostrata = True
+            clock.tick(60)
+
+        # Chiedi risposta
+        # Costruisci la lista di suggerimenti SOLO con i nomi italiani
+        suggerimenti_input = []
+        for codice_s, nomi in NOMI_BANDIERE.items():
+            if nomi[0]:
+                suggerimenti_input.append(nomi[0].title())
+        suggerimenti_input = list(dict.fromkeys(suggerimenti_input))
+        nomi = NOMI_BANDIERE.get(codice, (None, None))
+        risposte_valide = [n.lower() for n in nomi if n]
+        abbrev = {
+            'cd': ['drc', 'democratic republic of the congo'],
+            'cg': ['rep congo', 'republic of the congo'],
+            'gw': ['guineabissau', 'guinea bissau', 'guinea-bissau'],
+            'cf': ['car', 'central african republic'],
+            'us': ['usa', 'stati uniti', 'united states'],
+            'gb': ['uk', 'regno unito', 'united kingdom'],
+            'cz': ['czechia', 'czech republic', 'repubblica ceca'],
+            'ae': ['uae', 'emirati arabi uniti', 'united arab emirates'],
+        }
+        if codice in abbrev:
+            risposte_valide += [a.lower() for a in abbrev[codice]]
+        if codice == 'gw':
+            risposte_valide.append('guinea bissau')
+            risposte_valide.append('guineabissau')
+        risposta = input_box('Scrivi il nome dello stato (italiano o inglese):', suggerimenti=suggerimenti_input, mostra_tasto_non_comparso=mostra_tasto_non_comparso)
+        if risposta == '__non_comparso__':
+            return schermata_finale(handicap)
+        if risposta.strip().lower() in risposte_valide and risposte_valide:
+            mostra_messaggio('Corretto!')
+        else:
+            if risposte_valide:
+                soluzione = f'{risposte_valide[0].capitalize()} / {risposte_valide[1].capitalize()}' if len(risposte_valide) > 1 else risposte_valide[0].capitalize()
+            else:
+                soluzione = f'Codice: {codice.upper()}'
+            mostra_messaggio(f'Errato! Era {soluzione}')
+            # Ricomincia il quiz con gli stessi handicap
+            # (break dal ciclo e richiamo schermata_finale)
+            return schermata_finale(handicap)
+
+# Funzione per input box
+def input_box(prompt, suggerimenti=None, mostra_tasto_non_comparso=False):
+    clock = pygame.time.Clock()
+    testo = ''
+    attivo = True
+    # Definisci il rettangolo del tasto 'torna al menu' (proporzionale)
+    larghezza_attuale = schermo.get_width()
+    altezza_attuale = schermo.get_height()
+    menu_rect = pygame.Rect(larghezza_attuale - 210, 10, 200, 50)
+    # Definisci il rettangolo del tasto 'Non è comparso' se serve
+    non_comparso_rect = pygame.Rect((larghezza_attuale-200)//2, 10, 200, 50)
+    # Definisci il rettangolo del pulsante fullscreen (proporzionale)
+    pulsante_size = min(40, schermo.get_width() // 20)
+    fullscreen_rect = pygame.Rect(schermo.get_width() - pulsante_size - 10, 10, pulsante_size, pulsante_size)
+    suggerimenti = suggerimenti or []
+    suggerimenti_filtrati = []
+    suggerimento_selezionato = -1
+    while attivo:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    attivo = False
+                elif event.key == pygame.K_BACKSPACE:
+                    testo = testo[:-1]
+                elif event.key == pygame.K_DOWN:
+                    if suggerimenti_filtrati:
+                        suggerimento_selezionato = (suggerimento_selezionato + 1) % len(suggerimenti_filtrati)
+                elif event.key == pygame.K_UP:
+                    if suggerimenti_filtrati:
+                        suggerimento_selezionato = (suggerimento_selezionato - 1) % len(suggerimenti_filtrati)
+                elif event.key == pygame.K_TAB:
+                    if suggerimenti_filtrati and suggerimento_selezionato >= 0:
+                        testo = suggerimenti_filtrati[suggerimento_selezionato]
+                        attivo = False
+                elif event.key == pygame.K_F11:
+                    set_fullscreen()
+                else:
+                    testo += event.unicode
+                    suggerimento_selezionato = -1
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if fullscreen_rect.collidepoint(event.pos):
+                    set_fullscreen()
+                elif menu_rect.collidepoint(event.pos):
+                    schermata_opzioni()
+                    return ''
+                # Controlla se clic su suggerimento
+                for idx, (sugg, rect) in enumerate(rects_suggerimenti):
+                    if rect.collidepoint(event.pos):
+                        testo = sugg
+                        attivo = False
+                # Controlla se clic su 'Non è comparso'
+                if mostra_tasto_non_comparso and non_comparso_rect.collidepoint(event.pos):
+                    return '__non_comparso__'
+        # Filtra suggerimenti
+        suggerimenti_filtrati = [s for s in suggerimenti if testo.strip().lower() in s.lower() and testo.strip() != '' ]
+        suggerimenti_filtrati = suggerimenti_filtrati[:6]  # massimo 6 suggerimenti
+        schermo.fill((30,30,30))
+        box = pygame.Rect(larghezza_attuale//2-200, altezza_attuale//2-40, 400, 80)
+        pygame.draw.rect(schermo, (255,255,255), box, 2)
+        testo_render = FONT.render(testo, True, (255,255,255))
+        schermo.blit(testo_render, (box.x+10, box.y+20))
+        prompt_render = FONT_PICCOLO.render(prompt, True, (255,255,255))
+        schermo.blit(prompt_render, (box.x, box.y-40))
+        # Disegna il tasto 'torna al menu'
+        pygame.draw.rect(schermo, (180, 60, 60), menu_rect)
+        testo_menu = FONT_PICCOLO.render('torna al menu', True, (255,255,255))
+        schermo.blit(testo_menu, (menu_rect.centerx-testo_menu.get_width()//2, menu_rect.centery-testo_menu.get_height()//2))
+        # Disegna suggerimenti
+        rects_suggerimenti = []
+        for i, suggerimento in enumerate(suggerimenti_filtrati):
+            rect = pygame.Rect(box.x, box.y+box.height+10+i*38, box.width, 36)
+            colore = (60, 60, 180) if i == suggerimento_selezionato else (80, 80, 80)
+            pygame.draw.rect(schermo, colore, rect)
+            testo_sugg = FONT_PICCOLO.render(suggerimento, True, (255,255,255))
+            schermo.blit(testo_sugg, (rect.x+10, rect.y+6))
+            rects_suggerimenti.append((suggerimento, rect))
+        # Disegna il tasto 'Non è comparso' se serve
+        if mostra_tasto_non_comparso:
+            pygame.draw.rect(schermo, (200, 120, 0), non_comparso_rect)
+            testo_non_comp = FONT_PICCOLO.render('Non è comparso', True, (255,255,255))
+            schermo.blit(testo_non_comp, (non_comparso_rect.centerx-testo_non_comp.get_width()//2, non_comparso_rect.centery-testo_non_comp.get_height()//2))
+        # Disegna il pulsante fullscreen
+        disegna_pulsante_fullscreen(schermo)
+        pygame.display.flip()
+        clock.tick(60)
+    return testo
+
+# Funzione per mostrare un messaggio
+def mostra_messaggio(msg):
+    clock = pygame.time.Clock()
+    timer = 2
+    start = time.time()
+    while time.time() - start < timer:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                pulsante_size = min(40, schermo.get_width() // 20)
+                fullscreen_rect = pygame.Rect(schermo.get_width() - pulsante_size - 10, 10, pulsante_size, pulsante_size)
+                if fullscreen_rect.collidepoint(event.pos):
+                    set_fullscreen()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F11:
+                    set_fullscreen()
+        schermo.fill((30,30,30))
+        larghezza_attuale = schermo.get_width()
+        altezza_attuale = schermo.get_height()
+        msg_render = FONT.render(msg, True, (255,255,255))
+        schermo.blit(msg_render, (larghezza_attuale//2-msg_render.get_width()//2, altezza_attuale//2-msg_render.get_height()//2))
+        # Disegna il pulsante fullscreen
+        disegna_pulsante_fullscreen(schermo)
+        pygame.display.flip()
+        clock.tick(60)
+
+# Funzione per gestire il passaggio tra finestra e schermo intero
+fullscreen = False
+
+def set_fullscreen():
+    global schermo, fullscreen
+    if not fullscreen:
+        info = pygame.display.Info()
+        schermo = pygame.display.set_mode((info.current_w, info.current_h), pygame.FULLSCREEN)
+        fullscreen = True
+    else:
+        schermo = pygame.display.set_mode((LARGHEZZA, ALTEZZA))
+        fullscreen = False
+
+def disegna_pulsante_fullscreen(schermo):
+    """Disegna un pulsante personalizzato per il fullscreen nell'angolo in alto a destra"""
+    # Ottieni le dimensioni attuali della finestra
+    larghezza_attuale = schermo.get_width()
+    altezza_attuale = schermo.get_height()
+    
+    # Calcola la posizione proporzionale
+    pulsante_size = min(40, larghezza_attuale // 20)  # Dimensione proporzionale
+    x = larghezza_attuale - pulsante_size - 10
+    y = 10
+    
+    if not fullscreen:
+        # Pulsante per entrare in fullscreen
+        rect = pygame.Rect(x, y, pulsante_size, pulsante_size)
+        pygame.draw.rect(schermo, (100, 100, 100), rect)
+        pygame.draw.rect(schermo, (200, 200, 200), rect, 2)
+        # Disegna un simbolo di massimizzazione (quadrato con angoli)
+        offset = pulsante_size // 5
+        pygame.draw.rect(schermo, (255, 255, 255), (rect.x + offset, rect.y + offset, pulsante_size - 2*offset, pulsante_size - 2*offset), 2)
+        pygame.draw.rect(schermo, (255, 255, 255), (rect.x + offset*1.5, rect.y + offset//2, pulsante_size - 3*offset, pulsante_size - 3*offset), 2)
+    else:
+        # Pulsante per uscire dal fullscreen
+        rect = pygame.Rect(x, y, pulsante_size, pulsante_size)
+        pygame.draw.rect(schermo, (100, 100, 100), rect)
+        pygame.draw.rect(schermo, (200, 200, 200), rect, 2)
+        # Disegna un simbolo di ripristino (due quadrati sovrapposti)
+        offset = pulsante_size // 5
+        pygame.draw.rect(schermo, (255, 255, 255), (rect.x + offset, rect.y + offset, pulsante_size - 2*offset, pulsante_size - 2*offset), 2)
+        pygame.draw.rect(schermo, (255, 255, 255), (rect.x + offset//2, rect.y + offset//2, pulsante_size - 3*offset, pulsante_size - 3*offset), 2)
+    return rect
+
+if __name__ == '__main__':
+    schermata_opzioni()
